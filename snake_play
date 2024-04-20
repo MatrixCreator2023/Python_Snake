@@ -1,0 +1,123 @@
+import pygame
+import keyboard
+import random
+W=20
+WHITE = (255,255,255)
+
+WIDTH=810
+HEIGHT=600
+
+FPS=10
+
+class Head():
+    def __init__(self):
+        self.x=W
+        self.y=W
+        self.color=(0,0,255)
+        self.speeds = (W,0)
+        self.enabledKeys=[True,False,True,True]
+    def show(self,win):
+        pygame.draw.rect(win,self.color,(self.x,self.y,W,W))
+    def move(self):
+        if keyboard.is_pressed("d") or keyboard.is_pressed("right") and self.enabledKeys[0]:
+            self.enabledKeys=[True,False,True,True]
+            self.speeds = (W,0)
+        if keyboard.is_pressed("a") or keyboard.is_pressed("left") and self.enabledKeys[1]:
+            self.enabledKeys=[False,True,True,True]
+            self.speeds = (-W,0)
+        if keyboard.is_pressed("w") or keyboard.is_pressed("up") and self.enabledKeys[2]:
+            self.enabledKeys=[True,True,True,False]
+            self.speeds = (0,-W)
+        if keyboard.is_pressed("s") or keyboard.is_pressed("down") and self.enabledKeys[3]:
+            self.enabledKeys=[True,True,False,True]
+            self.speeds = (0,W)
+
+
+        self.x+=self.speeds[0]
+        self.y+=self.speeds[1]
+
+class Apple():
+    def __init__(self):
+        self.x=0
+        self.y=0
+        self.color=(255,0,0)
+    def show(self,win):
+        pygame.draw.rect(win,self.color,(self.x,self.y,W,W))
+    def givePosition(self,body):
+        (maxWidth,maxHeight)=(0,0)
+
+        while maxWidth < WIDTH:
+            maxWidth+=W
+        if WIDTH < maxWidth:
+            maxWidth-=W
+
+        while maxHeight < HEIGHT:
+            maxHeight+=W
+        if HEIGHT < maxHeight:
+            maxHeight-=W
+        self.x=random.randint(0,int(maxWidth/W)-W)*W
+        self.y=random.randint(0,int(maxHeight/W)-W)*W
+        for bP in body:
+            if (bP.x,bP.y)==(self.x,self.y):
+                self.givePosition(body)
+class BodyPart():
+    def __init__(self):
+        self.x=-W
+        self.y=-W
+        self.color=(155,255,155)
+    def show(self,win):
+        pygame.draw.rect(win,self.color,(self.x,self.y,W,W))
+
+
+def Reset():
+    newApple=Apple()
+    newHead=Head()
+    newBodyParts=[]
+    for i in range(5):
+        newBodyParts.append(BodyPart())
+    return (newHead,newBodyParts,newApple)
+
+if __name__ == "__main__":
+    running = True
+    window = pygame.display.set_mode((WIDTH,HEIGHT))
+
+    (head,bodyParts,apple)=Reset()
+
+    apple.givePosition(bodyParts)
+
+    clock=pygame.time.Clock()
+    while running:
+        clock.tick(FPS)
+        window.fill(WHITE)
+        
+
+        if head.x < 0 or head.x > WIDTH or head.y < 0 or head.y > HEIGHT:
+            (head,bodyParts,apple)=Reset()
+            apple.givePosition(bodyParts)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running=False
+
+        prevPos=(head.x,head.y)
+        head.move()
+        for bP in bodyParts:
+            if (bP.x,bP.y)== (head.x,head.y):
+                (head,bodyParts,apple)=Reset()
+
+            prevPrevPos = (bP.x,bP.y)
+            (bP.x,bP.y) = prevPos
+            prevPos=prevPrevPos
+
+            bP.show(window)
+        apple.show(window)
+        head.show(window)
+
+
+        if (head.x,head.y)==(apple.x,apple.y):
+            bodyParts.append(BodyPart())
+            apple.givePosition(bodyParts)
+        pygame.display.update()
+
+
+pygame.quit()
